@@ -6,7 +6,6 @@ import com.example.account.dto.AccountDto;
 import com.example.account.exception.AccountException;
 import com.example.account.repository.AccountRepository;
 import com.example.account.repository.AccountUserRepository;
-import com.example.account.type.AccountStatus;
 import com.example.account.type.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,6 @@ import javax.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.example.account.type.AccountStatus.*;
 
@@ -81,6 +79,9 @@ public class AccountService {
 
         account.setAccountStatus(UNREGISTERED);
         account.setUnregisteredAt(LocalDateTime.now());
+
+        accountRepository.save(account);
+        //원래 없어도되는데 원활한 테스트를 위해 넣음. 추천 X
 
         return AccountDto.fromEntity(account);
     }
