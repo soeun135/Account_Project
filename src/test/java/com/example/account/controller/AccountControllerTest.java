@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -27,7 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AccountController.class) //Test하려고 하는 컨트롤러 명시
 class AccountControllerTest {
-    @MockBean //Mock은 Mock인데 Bean으로 등록해주는 Mock //자동으로 Bean등록돼서 AccountController에 주입됨.
+    @MockBean
+    //Mock은 Mock인데 Bean으로 등록해주는 Mock //자동으로 Bean등록돼서 AccountController에 주입됨.
     private AccountService accountService;
 
     @MockBean
@@ -44,7 +47,7 @@ class AccountControllerTest {
     @Test
     void successCreateAccount() throws Exception {
         //given
-        given(accountService.createAccount(anyLong(),anyLong()))
+        given(accountService.createAccount(anyLong(), anyLong()))
                 .willReturn(AccountDto.builder()
                         .userId(1L)
                         .accountNumber("1234567890")
@@ -54,20 +57,20 @@ class AccountControllerTest {
         //when
         //then
         mockMvc.perform(post("/account")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(
-                        new CreateAccount.Request(1342L,100L)
-                )))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CreateAccount.Request(1342L, 100L)
+                        )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.accountNumber").value("1234567890"))
                 .andDo(print());
-     }
+    }
 
     @Test
     void successDeleteAccount() throws Exception {
         //given
-        given(accountService.deleteAccount(anyLong(),anyString()))
+        given(accountService.deleteAccount(anyLong(), anyString()))
                 .willReturn(AccountDto.builder()
                         .userId(1L)
                         .accountNumber("1234567890")
@@ -79,13 +82,46 @@ class AccountControllerTest {
         mockMvc.perform(delete("/account")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new DeleteAccount.Request(1342L,"1111111111")
+                                new DeleteAccount.Request(1342L, "1111111111")
                         )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.accountNumber").value("1234567890"))
                 .andDo(print());
     }
+
+    @Test
+    void successGetAccountsByUserId() throws Exception {
+        //given
+        List<AccountDto> accountDtos =
+                Arrays.asList(
+                        AccountDto.builder()
+                                .accountNumber(("1234555555"))
+                                .balance(10L).build(),
+                        AccountDto.builder()
+                                .accountNumber(("1111111111"))
+                                .balance(100L).build(),
+                        AccountDto.builder()
+                                .accountNumber(("2222222222"))
+                                .balance(10000L).build()
+                );
+        given(accountService.getAccountsByUserId(anyLong()))
+                .willReturn(accountDtos);
+
+        //when
+
+        //then
+        mockMvc.perform(get("/account?user_id=1"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].accountNumber").value("1234555555"))
+                .andExpect(jsonPath("$[0].balance").value(10L))
+                .andExpect(jsonPath("$[1].accountNumber").value("1111111111"))
+                .andExpect(jsonPath("$[1].balance").value(100L))
+                .andExpect(jsonPath("$[2].accountNumber").value("2222222222"))
+                .andExpect(jsonPath("$[2].balance").value(10000L));
+    }
+
     @Test
     void successGetAccount() throws Exception {
         //given
@@ -101,5 +137,5 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.accountNumber").value("1234"))
                 .andExpect(jsonPath("$.accountStatus").value("IN_USE"))
                 .andExpect(status().isOk());
-     }
+    }
 }
