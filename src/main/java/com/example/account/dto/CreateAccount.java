@@ -11,6 +11,8 @@ public class CreateAccount {
 
     @Getter
     @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Request{
         @NotNull
         @Min(1)
