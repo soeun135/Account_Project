@@ -21,6 +21,7 @@ import static com.example.account.type.AccountStatus.*;
 public class AccountService {
     private final AccountRepository accountRepository;
     private final AccountUserRepository accountUserRepository;
+
     /**
      * 사용자가 있는지 조회
      * 계좌번호 생성하고
@@ -30,6 +31,8 @@ public class AccountService {
     public AccountDto createAccount(Long userId, Long initialBalance) {
         AccountUser accountUser = accountUserRepository.findById(userId)
                 .orElseThrow(() -> new AccountException(ErrorCode.USER_NOT_FOUND));
+
+        validateCreateAccount(accountUser);
 
         String newAccountNumber = accountRepository.findFirstByOrderByIdDesc()
                 .map(account -> (Integer.parseInt(account.getAccountNumber())) + 1 + "")
@@ -43,12 +46,18 @@ public class AccountService {
                         .balance(initialBalance)
                         .registeredAt(LocalDateTime.now())
                         .build()
-        ));
+                ));
+    }
+
+    private void validateCreateAccount(AccountUser accountUser) {
+        if (accountRepository.countByAccountUser(accountUser) == 10) {
+           throw new AccountException(ErrorCode.MAX_ACCOUNT_PER_USER_10);
+        }
     }
 
     @Transactional
     public Account getAccount(Long id) {
-        if(id < 0) {
+        if (id < 0) {
             throw new RuntimeException("Minus");
         }
         return accountRepository.findById(id).get();
