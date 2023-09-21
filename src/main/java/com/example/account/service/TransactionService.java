@@ -12,6 +12,7 @@ import com.example.account.repository.AccountUserRepository;
 import com.example.account.repository.TransactionRepository;
 import com.example.account.type.ErrorCode;
 import com.example.account.type.TransactionResultType;
+import com.example.account.type.TransactionType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ import java.util.UUID;
 import static com.example.account.type.AccountStatus.UNREGISTERED;
 import static com.example.account.type.ErrorCode.*;
 import static com.example.account.type.TransactionResultType.*;
-import static com.example.account.type.TransactionType.USE;
+import static com.example.account.type.TransactionType.*;
 
 @Slf4j
 @Service
@@ -49,7 +50,7 @@ public class TransactionService {
 
         account.useBalance(amount);
 
-        return TransactionDto.fromEntity(saveAndGetTransaction(S, amount, account));
+        return TransactionDto.fromEntity(saveAndGetTransaction(USE, S, amount, account));
     }
 
     private void validateUseBalance(
@@ -71,12 +72,16 @@ public class TransactionService {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
 
-        saveAndGetTransaction(F, amount, account);
+        saveAndGetTransaction(USE, F, amount, account);
     }
 
-    private Transaction saveAndGetTransaction(TransactionResultType transactionResultType, Long amount, Account account) {
+    private Transaction saveAndGetTransaction(
+            TransactionType transactionType,
+            TransactionResultType transactionResultType,
+            Long amount,
+            Account account) {
         return transactionRepository.save(Transaction.builder()
-                .transactionType(USE)
+                .transactionType(transactionType)
                 .transactionResultType(transactionResultType)
                 .account(account)
                 .amount(amount)
@@ -85,5 +90,47 @@ public class TransactionService {
                 .transactedAt(LocalDateTime.now())
                 .build()
         );
+    }
+
+    @Transactional
+    public TransactionDto cancelBalance(String transactionId, String accountNumber, Long amount) {
+        //거래 아이디에 해당하는 거래가 없는 경우
+        Transaction transaction = transactionRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new AccountException(TRANSACTION_NOT_FOUND));
+        //계좌 없는 경우
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
+        //거래와 계좌 불일치
+        //거래 금액 != 취소금액
+        //1년이 넘은 거래 취소 불가
+        validateCancelBalance(transaction, account, amount);
+
+        account.cancelBalance(amount);
+
+        return TransactionDto.fromEntity(
+                saveAndGetTransaction(CANCEL, S, amount, account));
+
+    }
+
+    private void validateCancelBalance(Transaction transaction, Account account, Long amount) {
+        if (!Objects.equals(transaction.getAccount().getId(), account.getId())) {
+            throw new AccountException(TRANSACTION_UN_MATCH_ACCOUT)
+        }
+
+        if (!Objects.equals(transaction.getAmount(), amount)) {
+            throw new AccountException(CANCEL_AMOUNT_UN_MATCH_USE_AMOUNT);
+        }
+
+        if (transaction.getTransactedAt().isBefore(LocalDateTime.now().minusYears(1))) {
+            throw new AccountException(TOO_OLD_TRANSACTION);
+        }
+    }
+
+    @Transactional
+    public void saveFailedCancelTransaction(String accountNumber, Long amount) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
+
+        saveAndGetTransaction(CANCEL, F, amount, account);
     }
 }
