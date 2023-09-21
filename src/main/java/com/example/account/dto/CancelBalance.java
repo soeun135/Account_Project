@@ -39,8 +39,8 @@ public class CancelBalance {
         private Long amount;
         private LocalDateTime transactedAt;
 
-        public static UseBalance.Response from(TransactionDto transactionDto) {
-            return UseBalance.Response.builder()
+        public static CancelBalance.Response from(TransactionDto transactionDto) {
+            return CancelBalance.Response.builder()
                     .accountNumber(transactionDto.getAccountNumber())
                     .transactionResultType(transactionDto.getTransactionResultType())
                     .transactionId(transactionDto.getTransactionId())

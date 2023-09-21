@@ -114,7 +114,7 @@ public class TransactionService {
 
     private void validateCancelBalance(Transaction transaction, Account account, Long amount) {
         if (!Objects.equals(transaction.getAccount().getId(), account.getId())) {
-            throw new AccountException(TRANSACTION_UN_MATCH_ACCOUT)
+            throw new AccountException(TRANSACTION_UN_MATCH_ACCOUT);
         }
 
         if (!Objects.equals(transaction.getAmount(), amount)) {
