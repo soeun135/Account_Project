@@ -352,7 +352,7 @@ class TransactionServiceTest {
                         "trId", "1111", 1000L));
 
         //then
-        assertEquals(ErrorCode.TRANSACTION_UN_MATCH_ACCOUT, exception.getErrorCode());
+        assertEquals(ErrorCode.TRANSACTION_UN_MATCH_ACCOUNT, exception.getErrorCode());
     }
 
     @Test
