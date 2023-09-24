@@ -62,7 +62,7 @@ class LockAopAspectTest {
         UseBalance.Request request =
                 new UseBalance.Request(123L,"54321",1000L);
         given(proceedingJoinPoint.proceed())
-                .willThrow(new AccountException((ACCOUNT_NOT_FOUND)));
+                .willThrow(new AccountException(ACCOUNT_NOT_FOUND));
         //when
         assertThrows(AccountException.class, () ->
         lockAopAspect.aroundMethod(proceedingJoinPoint, request));
