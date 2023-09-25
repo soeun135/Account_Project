@@ -15,6 +15,7 @@ import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.example.account.type.AccountStatus.*;
@@ -34,13 +35,19 @@ public class AccountService {
     @Transactional
     public AccountDto createAccount(Long userId, Long initialBalance) {
         AccountUser accountUser = getAccountUser(userId);
+        Random random = new Random();
+        random.setSeed(System.currentTimeMillis());
 
         validateCreateAccount(accountUser);
 
+        String createNum = "";
+        for (int i = 0; i < 10; i++) {
+            createNum += Integer.toString(random.nextInt(10));
+        }
         String newAccountNumber = accountRepository.findFirstByOrderByIdDesc()
-                .map(account -> (Integer.parseInt(account.getAccountNumber())) + 1 + "")
-                .orElse("1000000000");
-
+                .map(account -> (Long.parseLong(account.getAccountNumber())) + 1 + "")
+                .orElse(createNum);
+        //계좌번호를 랜덤숫자로
         return AccountDto.fromEntity(
                 accountRepository.save(Account.builder()
                         .accountUser(accountUser)
