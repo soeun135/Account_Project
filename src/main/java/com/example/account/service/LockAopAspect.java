@@ -14,17 +14,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LockAopAspect {
     private final LockService lockService;
-    @Around("@annotation(com.example.account.aop.AccountLock) && args(request)")//어떤 경우에 Aspect를 적용할 것인ㄱㅏ
+    @Around("@annotation(com.example.account.aop.AccountLock) && args(request)")
     public Object aroundMethod(
             ProceedingJoinPoint pjp,
             AccountLockIdInterface request
     ) throws Throwable {
-        //lock 취득 시도
         lockService.lock(request.getAccountNumber());
         try {
             return pjp.proceed();
         } finally {
-            // lock 해제
             lockService.unlock(request.getAccountNumber());
         }
     }

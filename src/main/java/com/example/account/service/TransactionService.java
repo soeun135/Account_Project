@@ -4,13 +4,10 @@ import com.example.account.domain.Account;
 import com.example.account.domain.AccountUser;
 import com.example.account.domain.Transaction;
 import com.example.account.dto.TransactionDto;
-import com.example.account.dto.UseBalance;
 import com.example.account.exception.AccountException;
-import com.example.account.exception.TransactionException;
 import com.example.account.repository.AccountRepository;
 import com.example.account.repository.AccountUserRepository;
 import com.example.account.repository.TransactionRepository;
-import com.example.account.type.ErrorCode;
 import com.example.account.type.TransactionResultType;
 import com.example.account.type.TransactionType;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +21,10 @@ import java.util.UUID;
 
 import static com.example.account.type.AccountStatus.UNREGISTERED;
 import static com.example.account.type.ErrorCode.*;
-import static com.example.account.type.TransactionResultType.*;
-import static com.example.account.type.TransactionType.*;
+import static com.example.account.type.TransactionResultType.F;
+import static com.example.account.type.TransactionResultType.S;
+import static com.example.account.type.TransactionType.CANCEL;
+import static com.example.account.type.TransactionType.USE;
 
 @Slf4j
 @Service
@@ -38,14 +37,11 @@ public class TransactionService {
     @Transactional
     public TransactionDto useBalance(Long userId, String accountNumber,
                                      Long amount) {
-        //사용자, 계좌가 없는 경우
         AccountUser accountUser = accountUserRepository.findById(userId)
                 .orElseThrow(() -> new AccountException(USER_NOT_FOUND));
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
-        //사용자 아이디와 계좌 소유주가 다른 경우
-        //계좌가 이미 해지 상태인 경우, 거래금액이 잔액보다 큰 경우,
-        //거래금액이 너무 작거나 큰 경우
+
         validateUseBalance(accountUser, account, amount);
 
         account.useBalance(amount);
@@ -94,15 +90,12 @@ public class TransactionService {
 
     @Transactional
     public TransactionDto cancelBalance(String transactionId, String accountNumber, Long amount) {
-        //거래 아이디에 해당하는 거래가 없는 경우
         Transaction transaction = transactionRepository.findByTransactionId(transactionId)
                 .orElseThrow(() -> new AccountException(TRANSACTION_NOT_FOUND));
-        //계좌 없는 경우
+
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountException(ACCOUNT_NOT_FOUND));
-        //거래와 계좌 불일치
-        //거래 금액 != 취소금액
-        //1년이 넘은 거래 취소 불가
+
         validateCancelBalance(transaction, account, amount);
 
         account.cancelBalance(amount);
